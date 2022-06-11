@@ -1,0 +1,133 @@
+import java_cup.runtime.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+
+action code {:
+
+:};
+
+parser code {:
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+    Map<String, Integer> simbolos = new HashMap<String, Integer>();	
+	ArrayList<Integer> vectors = new ArrayList<>();
+	ArrayList<Integer> elementos = new ArrayList<>();
+	
+	public void syntax_error(Symbol s){
+		System.out.println("compiler has detected a syntax error at line -> " + s.left 
+			+ " column " + s.right);
+	}
+:}
+init with {:  :};
+scan with {: return s.next_token(); :};
+terminal            SEMI, ATRIB, MENOS, MAIS, VEZES, DIVIDIR, MAIORQUE, MENORQUE, MENORIGUAL, MAIORIGUAL, MENOR, MAIOR, LPAREN, 
+					RPAREN, LCOL, RCOL, VIRG, ID, DOBRO, TRIPLO, IGUAL, IF, ELSE, WRITE, WHILE, UM, DOIS, TRES, QUATRO, CINCO, 
+					SEIS, SETE, OITO, NOVE, DEZ, PRIMEIRO, SEGUNDO, TERCEIRO, QUARTO, QUINTO, PALAVRA;
+terminal Integer    NUMERO;        
+
+/* Não terminais 
+- begin  ()
+- loop   (Non terminal to control the repeat loops)
+- cond   (Non terminal to control the conditional terms)
+- choice (Non terminal to control the choise terms)
+- exp    (Non terminal to store the evaluated arithmetic subexpressions)
+*/
+non terminal            begin, loop, cond, choice; 
+non terminal Integer    exp;
+precedence left MAIS, MENOS, DIVIDIR;
+precedence left VEZES;
+
+begin ::=   begin exp:e SEMI       	 {: System.out.println(e);      	:}
+           | exp:e SEMI              {: System.out.println(e);      	:}
+		   | begin loop:l SEMI		 {:          						:}
+		   | loop:l SEMI			 {: 						        :} // loop tratament
+		   | begin cond:c SEMI       {: 		 						:} 
+		   | cond:c SEMI			 {:          						:} // conditional tratament
+;
+
+exp ::=   exp:e1 MAIS  exp:e2        {: RESULT = e1+e2;                	:}
+        | exp:e1 MENOS exp:e2        {: RESULT = e1-e2;                	:}
+        | exp:e1 VEZES exp:e2        {: RESULT = e1*e2;                	:}
+		| exp:e1 DIVIDIR exp:e2      {: RESULT = e1 / e2;         		:}
+        | MENOS exp:e                {: RESULT = -e;                  	:}
+        | LPAREN exp:e RPAREN	     {: RESULT = e;                    	:}
+        | NUMERO:n                   {: RESULT = n;                    	:}
+        | ID:i	                     {: RESULT = simbolos.get(i);     	:}
+		| UM:um	                     {: RESULT = 1;   					:}
+		| DOIS:dois	                 {: RESULT = 2;   					:}
+		| TRES:tres	                 {: RESULT = 3;   					:}
+		| QUATRO:quatro	             {: RESULT = 4;   					:}
+		| CINCO:cinco	             {: RESULT = 5;   					:}
+		| SEIS:seis	                 {: RESULT = 6;   					:}
+		| SETE:sete	                 {: RESULT = 7;   					:}
+		| OITO:oito	                 {: RESULT = 8;   					:}
+		| NOVE:nove	                 {: RESULT = 9;   					:}
+		| DEZ:dez	                 {: RESULT = 10;   					:}
+		| DOBRO exp:e	             {: RESULT = e+e; 					:}
+		| TRIPLO exp:e	             {: RESULT = 3*e; 					:}
+        | ATRIB exp:e ID:i           {: simbolos.put(i.toString(), e);  System.out.println("Steps -> "+ simbolos.get(i));:}
+		| MAIOR LCOL NUMERO:n1 VIRG NUMERO:n2 VIRG NUMERO:n3 RCOL {: vectors.add(n1);
+																	 vectors.add(n2);
+																	 vectors.add(n3);
+																	 RESULT = Collections.max(vectors);
+																  :}
+		| MENOR LCOL NUMERO:n1 VIRG NUMERO:n2 VIRG NUMERO:n3 RCOL {: vectors.add(n1);
+																	 vectors.add(n2);
+																	 vectors.add(n3);
+																	 RESULT = Collections.min(vectors);
+																  :} 
+	    | choice:i LCOL NUMERO:n1 VIRG NUMERO:n2 VIRG NUMERO:n3 VIRG NUMERO:n4 RCOL {: elementos.add(n1);
+																					elementos.add(n2);
+																					elementos.add(n3);
+																					elementos.add(n4);
+																					RESULT = elementos.get((int)i);
+																				 :}
+;
+
+loop ::= WHILE PALAVRA:p NUMERO:n {: while(n>0){
+									  System.out.println(p);
+									  n=n-1; } 							:}
+	  | WHILE NUMERO:n1 NUMERO:n2 {: while(n2>0){
+										 System.out.println(n1);
+										 n2=n2-1; } 					:} 
+	  | WRITE PALAVRA:p NUMERO:n VEZES{: while(n>0){
+										 System.out.println(n + "-> " + p);
+										 n=n-1; } 					:} 
+;
+
+cond ::= IF choice:i WRITE PALAVRA:p1 ELSE WRITE PALAVRA:p2   {: if((boolean)i){
+																   System.out.println(p1);
+																} else {
+																   System.out.println(p2);
+																} 		:}
+	   
+	   | IF choice:i ATRIB exp:e1 ID:id ELSE ATRIB exp:e2 ID:d {: if((boolean)i){
+																   simbolos.put(id.toString(), e1);
+																} else {
+																   simbolos.put(d.toString(), e2);
+	   															} 		:}	    
+;
+
+choice ::= ID:i MAIOR NUMERO:n        	 {: RESULT = simbolos.get(i); RESULT = (int)RESULT>n;  										:}
+		| ID:i MENOR NUMERO:n         	 {: RESULT = simbolos.get(i); RESULT = (int)RESULT<n;  										:}
+		| ID:i MAIORIGUAL NUMERO:n       {: RESULT = simbolos.get(i); RESULT = (int)RESULT>=n; 										:}
+		| ID:i MENORIGUAL NUMERO:n       {: RESULT = simbolos.get(i); RESULT = (int)RESULT<=n; 										:}
+		| ID:i IGUAL NUMERO:n      	   	 {: RESULT = simbolos.get(i); RESULT = (int)RESULT==n; 										:}
+		| NUMERO:n1 MAIOR NUMERO:n2   	 {: RESULT = n1>n2;  			:}
+		| NUMERO:n1 MENOR NUMERO:n2   	 {: RESULT = n1<n2;  			:}
+		| NUMERO:n1 MAIORIGUAL NUMERO:n2 {: RESULT = n1>=n2; 			:}
+		| NUMERO:n1 MENORIGUAL NUMERO:n2 {: RESULT = n1<=n2; 			:}
+		| NUMERO:n1 IGUAL NUMERO:n2      {: RESULT = (int)n1==(int)n2; 	:}
+		| ID:i MAIOR ID:d             	 {: RESULT = simbolos.get(i); RESULT = simbolos.get(d); RESULT = (int)RESULT>(int)RESULT;  	:}
+		| ID:i MENOR ID:d             	 {: RESULT = simbolos.get(i); RESULT = simbolos.get(d); RESULT = (int)RESULT<(int)RESULT;  	:}
+		| ID:i MAIORIGUAL ID:d           {: RESULT = simbolos.get(i); RESULT = simbolos.get(d); RESULT = (int)RESULT>=(int)RESULT; 	:}
+		| ID:i MENORIGUAL ID:d           {: RESULT = simbolos.get(i); RESULT = simbolos.get(d); RESULT = (int)RESULT<=(int)RESULT; 	:}
+		| ID:i IGUAL ID:d                {: int result1 = simbolos.get(i); int result2 = simbolos.get(d); RESULT = result1==result2;:}
+		| PRIMEIRO					     {: RESULT = 0; 				:}
+		| SEGUNDO					     {: RESULT = 1; 				:}
+		| TERCEIRO					     {: RESULT = 2; 				:}
+		| QUARTO					     {: RESULT = 3; 				:}
+		| QUINTO					     {: RESULT = 4; 				:}
+;

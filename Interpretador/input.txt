@@ -1,0 +1,8 @@
+Qual e o dobro de (um mais quatro);
+Qual e o terceiro elemento da serie [5, 10, 15, 20];
+Escreva #Ola mundo# 50 vezes;
+Qual e maior entre [2, 3, 1];
+Guarde 42 em &x;
+Se &x e maior que 40 escreva %Sim% senao escreva %Nao%;
+Qual e o triplo de (um mais cinco);
+Qual e o dobro de cinco;
